@@ -807,7 +807,6 @@ function initFilterBuilder() {
     }
     applyFilters();
   });
-  });
 
   // Display options
   document.getElementById('fb-hide-unmatched')?.addEventListener('click', function() {
