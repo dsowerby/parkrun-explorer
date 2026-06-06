@@ -515,6 +515,8 @@ fetch('events.json')
           visitedHtml = `<div style="font-size:11px;color:#aaa;margin-bottom:8px">Not visited</div>`;
         }
 
+        const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
         return `<div style="min-width:180px">
           <div style="font-weight:600;font-size:13px;margin-bottom:4px">${props.EventLongName || name}</div>
           <div style="font-size:11px;color:#666;margin-bottom:2px">${props.EventLocation || ''}${series}</div>
@@ -523,6 +525,8 @@ fetch('events.json')
           <a href="${eventUrl}/results/" target="_blank" style="font-size:12px;color:#27ae60;font-weight:500;text-decoration:none">Results →</a>
           &nbsp;
           <a href="${eventUrl}/" target="_blank" style="font-size:12px;color:#27ae60;font-weight:500;text-decoration:none">Event page →</a>
+          &nbsp;
+          <a href="${mapsUrl}" target="_blank" style="font-size:12px;color:#27ae60;font-weight:500;text-decoration:none">Directions →</a>
         </div>`;
       });
 
