@@ -793,11 +793,16 @@ function initFilterBuilder() {
     if (km > 0) {
       activeFilters.radius = { lat, lng, km };
       updateRadiusCircle(lat, lng, km);
+      // Fit to circle unless hide-unmatched will do a tighter fit to matched events
+      if (!activeFilters.hideUnmatched && radiusCircle) {
+        map.fitBounds(radiusCircle.getBounds(), { padding: [40, 40] });
+      }
     } else {
       activeFilters.radius = null;
       if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
     }
-    if (closestMode) applyClosest(); else applyFilters();
+    applyFilters();
+  });
   });
 
   // Display options
