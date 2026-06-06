@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>parkrun explorer</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Leaflet.markercluster (optional clustering feature) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+  <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+  <link rel="stylesheet" href="map.css">
+</head>
+<body>
+
+<!-- ─── Sidebar ─────────────────────────────────────────────────────────────── -->
+<div id="sidebar">
+
+  <!-- Header & athlete loader -->
+  <div class="sidebar-header">
+    <h1><span class="logo-dot"></span> parkrun explorer</h1>
+    <div class="athlete-row">
+      <input id="athlete-id-input" type="text" placeholder="Athlete ID…" inputmode="numeric">
+      <button class="pill-btn" id="load-athlete-btn">Load</button>
+    </div>
+    <div class="athlete-count" id="athlete-count"></div>
+  </div>
+
+  <!-- Loading state -->
+  <div id="loading-status">Loading events…</div>
+
+  <!-- ── Origin pin bar — shared by radius filter and closest unvisited ──── -->
+  <div id="origin-bar" style="display:none">
+    <div id="origin-bar-inner">
+      <span id="origin-label">📍</span>
+      <button class="origin-bar-btn" id="locate-btn">My location</button>
+      <button class="origin-bar-btn" id="place-pin-btn">Pick on map</button>
+      <button class="origin-bar-btn origin-bar-clear" id="clear-origin-btn">✕</button>
+    </div>
+  </div>
+  <!-- Show origin bar when no origin set yet -->
+  <div id="origin-bar-empty">
+    <button class="origin-bar-btn" id="set-origin-btn">📍 Set origin…</button>
+  </div>
+
+  <!-- Filter status -->
+  <div id="filter-status"></div>
+
+  <!-- Clear button -->
+  <button id="clear-filters-btn">✕ Clear all filters</button>
+
+  <!-- ── Filters ─────────────────────────────────────────────────────────── -->
+  <div class="sidebar-section">
+    <div class="section-header" onclick="toggleSection(this)">
+      Filters <span class="chevron">▾</span>
+    </div>
+    <div class="section-body">
+
+      <!-- Name search -->
+      <div>
+        <div class="fb-label">Event name</div>
+        <input id="fb-name" class="fb-input" type="text" placeholder="Search events…">
+      </div>
+
+      <!-- Country -->
+      <div>
+        <div class="fb-label">Country</div>
+        <select id="fb-country" class="fb-input">
+          <option value="">All countries</option>
+        </select>
+      </div>
+
+      <!-- Series -->
+      <div>
+        <div class="fb-label">Series</div>
+        <div class="btn-group">
+          <button class="pill-btn fb-series-btn" data-series="1">5k</button>
+          <button class="pill-btn fb-series-btn" data-series="2">Junior</button>
+        </div>
+      </div>
+
+      <!-- Visited / unvisited -->
+      <div id="my-runs-row">
+        <div class="fb-label">My runs</div>
+        <div class="btn-group">
+          <button class="pill-btn" id="fb-visited">✓ Visited</button>
+          <button class="pill-btn" id="fb-unvisited">✗ Not visited</button>
+        </div>
+      </div>
+
+      <!-- Within radius — only shown when origin is set -->
+      <div id="radius-filter-row" style="display:none">
+        <div class="fb-label">Within</div>
+        <div class="radius-row">
+          <input type="range" id="radius-km" min="0" max="200" value="0" step="5">
+          <span class="radius-label" id="radius-label">Off</span>
+        </div>
+      </div>
+
+      <!-- Display options — only shown when a filter is active -->
+      <div class="fb-hide-row" style="display:none">
+        <div class="fb-label">Display</div>
+        <div class="btn-group">
+          <button class="pill-btn" id="fb-hide-unmatched">Hide unmatched</button>
+          <button class="pill-btn" id="fb-cluster">Cluster</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Map style ───────────────────────────────────────────────────────── -->
+  <div class="sidebar-section">
+    <div class="section-header collapsed" onclick="toggleSection(this)">
+      Map style <span class="chevron">▾</span>
+    </div>
+    <div class="section-body collapsed">
+      <div class="tile-grid">
+        <button class="tile-btn active" data-tile="standard">
+          <span class="tile-icon">🗺️</span>Standard
+        </button>
+        <button class="tile-btn" data-tile="dark">
+          <span class="tile-icon">🌑</span>Dark
+        </button>
+        <button class="tile-btn" data-tile="light">
+          <span class="tile-icon">☁️</span>Light
+        </button>
+        <button class="tile-btn" data-tile="topo">
+          <span class="tile-icon">⛰️</span>Topo
+        </button>
+        <button class="tile-btn" data-tile="satellite">
+          <span class="tile-icon">🛰️</span>Satellite
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Legend ──────────────────────────────────────────────────────────── -->
+  <div class="sidebar-section">
+    <div class="section-header collapsed" onclick="toggleSection(this)">
+      Legend <span class="chevron">▾</span>
+    </div>
+    <div class="section-body collapsed">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div> Visited</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div> Not visited</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2ecc71;border-color:#27ae60;border-width:2px"></div> Visited + matches filter</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3498db"></div> Matches filter</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#aaa"></div> Outside filter</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Stats ───────────────────────────────────────────────────────────── -->
+  <div class="sidebar-section">
+    <div class="section-header collapsed" onclick="toggleSection(this)">
+      My stats <span class="chevron">▾</span>
+    </div>
+    <div class="section-body collapsed">
+      <div id="stats-panel"><div class="stats-empty">Load an athlete to see your stats.</div></div>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- ─── Map ─────────────────────────────────────────────────────────────────── -->
+<div id="map"></div>
+
+<script src="map.js"></script>
+<script>
+// ─── Section collapse toggle ─────────────────────────────────────────────────
+
+function toggleSection(header) {
+  header.classList.toggle('collapsed');
+  header.nextElementSibling.classList.toggle('collapsed');
+}
+
+// ─── Origin bar UI ───────────────────────────────────────────────────────────
+
+function updateOriginBar(hasOrigin, lat, lng) {
+  document.getElementById('origin-bar').style.display        = hasOrigin ? '' : 'none';
+  document.getElementById('origin-bar-empty').style.display  = hasOrigin ? 'none' : '';
+  document.getElementById('radius-filter-row').style.display = hasOrigin ? '' : 'none';
+  if (hasOrigin && lat !== undefined)
+    document.getElementById('origin-label').textContent = `📍 ${lat.toFixed(2)}°, ${lng.toFixed(2)}°`;
+}
+
+// ─── Stats panel ─────────────────────────────────────────────────────────────
+
+function buildStatsPanel() {
+  const panel = document.getElementById('stats-panel');
+  if (!panel) return;
+
+  if (visitedSet.size === 0 || allEvents.length === 0) {
+    panel.innerHTML = '<div class="stats-empty">Load an athlete to see your stats.</div>';
+    return;
+  }
+
+  const total = visitedSet.size;
+  const pct   = ((total / allEvents.length) * 100).toFixed(1);
+
+  // Countries visited
+  const countriesVisited = new Set();
+  allEvents.forEach(f => {
+    if (visitedSet.has(f.properties.eventname))
+      countriesVisited.add(f.properties.countrycode);
+  });
+
+  // Letters covered
+  const letters = new Set();
+  visitedSet.forEach(slug => {
+    const feature = allEvents.find(f => f.properties.eventname === slug);
+    const name    = feature?.properties.EventShortName || slug;
+    if (name) letters.add(name[0].toUpperCase());
+  });
+  const missingLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').filter(l => !letters.has(l));
+
+  // Rich stats — only available with new-format JSON
+  let richHtml = '';
+  if (athleteData?.events) {
+    const entries = Object.entries(athleteData.events);
+    const evVals  = entries.map(([,v]) => v);
+
+    // Best time overall
+    const toSecs = t => { if (!t) return Infinity; const [m,s] = t.split(':').map(Number); return m*60+(s||0); };
+    const bestEntry = entries
+      .filter(([,v]) => v.best_time)
+      .sort((a,b) => toSecs(a[1].best_time) - toSecs(b[1].best_time))[0];
+
+    // Most visited
+    const mostVisited = entries.sort((a,b) => b[1].count - a[1].count)[0];
+    const mostVisitedName = allEvents.find(f => f.properties.eventname === mostVisited?.[0])
+      ?.properties.EventShortName || mostVisited?.[0];
+
+    // First run ever
+    const firstRun = evVals
+      .filter(v => v.first)
+      .sort((a,b) => a.first.localeCompare(b.first))[0]?.first;
+
+    // Most recent run
+    const lastRun = evVals
+      .filter(v => v.last)
+      .sort((a,b) => b.last.localeCompare(a.last))[0]?.last;
+
+    // PB count
+    const pbCount = evVals.filter(v => v.pb).length;
+
+    // Home event display name
+    const homeName = athleteData.home_event
+      ? allEvents.find(f => f.properties.eventname === athleteData.home_event)?.properties.EventShortName || athleteData.home_event
+      : null;
+
+    const box = (label, val) => val
+      ? `<div class="stat-item"><div class="stat-value stat-value-sm">${val}</div><div class="stat-label">${label}</div></div>`
+      : '';
+
+    richHtml = `<div class="stats-grid">
+      ${box('home event',    homeName)}
+      ${box('first run',     firstRun)}
+      ${box('most recent',   lastRun)}
+      ${box('best time',     bestEntry?.[1].best_time)}
+      ${box('most visited',  mostVisitedName && mostVisited?.[1].count > 1 ? `${mostVisitedName} (${mostVisited[1].count}×)` : null)}
+      ${box('events with PB', pbCount > 0 ? pbCount : null)}
+    </div>`;
+  }
+
+  panel.innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value">${athleteData?.total_runs ?? total}</div><div class="stat-label">total runs</div></div>
+      <div class="stat-item"><div class="stat-value">${total}</div><div class="stat-label">events visited</div></div>
+      <div class="stat-item"><div class="stat-value">${countriesVisited.size}</div><div class="stat-label">countries</div></div>
+      <div class="stat-item"><div class="stat-value">${letters.size}/26</div><div class="stat-label">letters</div></div>
+    </div>
+    ${richHtml}
+    ${missingLetters.length > 0 && missingLetters.length < 20 ? `
+      <div class="stats-missing-letters">
+        <div class="fb-label" style="margin-bottom:4px">Missing letters</div>
+        ${missingLetters.map(l => `<span class="stats-letter-chip">${l}</span>`).join('')}
+      </div>` : ''}
+    ${countriesVisited.size > 0 ? `
+      <div class="stats-countries">
+        ${[...countriesVisited]
+          .map(cc => {
+            // Find the earliest visit date for any event in this country
+            let earliest = null;
+            if (athleteData?.events) {
+              allEvents
+                .filter(f => f.properties.countrycode === cc && visitedSet.has(f.properties.eventname))
+                .forEach(f => {
+                  const ev = athleteData.events[f.properties.eventname];
+                  if (ev?.first && (!earliest || ev.first < earliest)) earliest = ev.first;
+                });
+            }
+            return { cc, earliest };
+          })
+          .sort((a, b) => {
+            if (!a.earliest && !b.earliest) return 0;
+            if (!a.earliest) return 1;
+            if (!b.earliest) return -1;
+            return a.earliest.localeCompare(b.earliest);
+          })
+          .map(({ cc }) => {
+            const info = COUNTRY_INFO?.[cc];
+            return info ? `<span title="${info.name}">${info.flag}</span>` : '';
+          })
+          .join(' ')}
+      </div>` : ''}
+  `;
+}
+
+// ─── Refresh dynamic UI when athlete loads ────────────────────────────────────
+
+function refreshAthleteUI() {
+  buildStatsPanel();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('set-origin-btn')?.addEventListener('click', locateMe);
+  buildStatsPanel();
+
+  const _origLoad = window.loadAthlete;
+  window.loadAthlete = function(id) {
+    _origLoad(id);
+    const poll = setInterval(() => {
+      if (visitedSet.size > 0) { clearInterval(poll); refreshAthleteUI(); }
+    }, 200);
+    setTimeout(() => clearInterval(poll), 10000);
+  };
+});
+</script>
+</body>
+</html>
