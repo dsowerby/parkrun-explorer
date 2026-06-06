@@ -27,6 +27,7 @@
     <div class="athlete-row">
       <input id="athlete-id-input" type="text" placeholder="Athlete ID…" inputmode="numeric">
       <button class="pill-btn" id="load-athlete-btn">Load</button>
+      <button class="pill-btn" id="clear-athlete-btn" style="display:none" title="Clear athlete">✕</button>
     </div>
     <div class="athlete-count" id="athlete-count"></div>
   </div>
@@ -137,15 +138,22 @@
           <span class="tile-icon">🛰️</span>Satellite
         </button>
       </div>
+      <div style="margin-top:10px">
+        <div class="fb-label">Sidebar theme</div>
+        <div class="btn-group" style="margin-top:4px">
+          <button class="pill-btn" id="ui-theme-light" onclick="setUITheme('light')">Light</button>
+          <button class="pill-btn active" id="ui-theme-dark" onclick="setUITheme('dark')">Dark</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- ── Legend ──────────────────────────────────────────────────────────── -->
   <div class="sidebar-section">
-    <div class="section-header collapsed" onclick="toggleSection(this)">
+    <div class="section-header" onclick="toggleSection(this)">
       Legend <span class="chevron">▾</span>
     </div>
-    <div class="section-body collapsed">
+    <div class="section-body">
       <div class="legend">
         <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div> Visited</div>
         <div class="legend-item"><div class="legend-dot" style="background:#e74c3c"></div> Not visited</div>
@@ -158,10 +166,10 @@
 
   <!-- ── Stats ───────────────────────────────────────────────────────────── -->
   <div class="sidebar-section">
-    <div class="section-header collapsed" onclick="toggleSection(this)">
+    <div class="section-header" onclick="toggleSection(this)">
       My stats <span class="chevron">▾</span>
     </div>
-    <div class="section-body collapsed">
+    <div class="section-body">
       <div id="stats-panel"><div class="stats-empty">Load an athlete to see your stats.</div></div>
     </div>
   </div>
@@ -314,6 +322,15 @@ function buildStatsPanel() {
   `;
 }
 
+// ─── UI theme (sidebar dark/light, independent of map tiles) ─────────────────
+
+function setUITheme(theme) {
+  document.body.classList.toggle('dark-ui', theme === 'dark');
+  localStorage.setItem('pe-ui-theme', theme);
+  document.getElementById('ui-theme-light')?.classList.toggle('active', theme === 'light');
+  document.getElementById('ui-theme-dark')?.classList.toggle('active', theme === 'dark');
+}
+
 // ─── Refresh dynamic UI when athlete loads ────────────────────────────────────
 
 function refreshAthleteUI() {
@@ -324,13 +341,39 @@ function refreshAthleteUI() {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('set-origin-btn')?.addEventListener('click', locateMe);
+
+  // Restore UI theme
+  const savedTheme = localStorage.getItem('pe-ui-theme') || 'light';
+  setUITheme(savedTheme);
+
+  // Clear athlete button
+  document.getElementById('clear-athlete-btn')?.addEventListener('click', () => {
+    visitedSet  = new Set();
+    athleteData = null;
+    athleteId   = null;
+    localStorage.removeItem('parkrun-athlete');
+    const input = document.getElementById('athlete-id-input');
+    if (input) input.value = '';
+    const count = document.getElementById('athlete-count');
+    if (count) count.textContent = '';
+    document.getElementById('clear-athlete-btn').style.display = 'none';
+    document.getElementById('load-athlete-btn').style.display  = '';
+    applyFilters();
+    refreshAthleteUI();
+  });
+
   buildStatsPanel();
 
   const _origLoad = window.loadAthlete;
   window.loadAthlete = function(id) {
     _origLoad(id);
     const poll = setInterval(() => {
-      if (visitedSet.size > 0) { clearInterval(poll); refreshAthleteUI(); }
+      if (visitedSet.size > 0) {
+        clearInterval(poll);
+        refreshAthleteUI();
+        document.getElementById('clear-athlete-btn').style.display = '';
+        document.getElementById('load-athlete-btn').style.display  = 'none';
+      }
     }, 200);
     setTimeout(() => clearInterval(poll), 10000);
   };

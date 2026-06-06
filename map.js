@@ -46,7 +46,6 @@ function setTileLayer(key) {
   document.querySelectorAll('.tile-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.tile === key);
   });
-  document.body.classList.toggle('dark-tiles', key === 'dark');
 }
 
 // ─── Map init ─────────────────────────────────────────────────────────────────

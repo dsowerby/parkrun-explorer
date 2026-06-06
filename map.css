@@ -35,7 +35,7 @@
   --radius-track:    #ddd;
 }
 
-body.dark-tiles {
+body.dark-ui {
   --sidebar-bg:      #1a1c1e;
   --sidebar-border:  #2e3135;
   --sidebar-text:    #e8e6e0;
@@ -532,8 +532,8 @@ select.fb-input { cursor: pointer; appearance: none; background-image: url("data
 .ci-progress-partial { background: #fef9e7; color: #b7950b; }
 .ci-progress-none    { background: var(--tag-bg); color: var(--tag-text); }
 
-body.dark-tiles .ci-progress-done    { background: #0f2318; color: #2ecc71; }
-body.dark-tiles .ci-progress-partial { background: #2d2700; color: #f1c40f; }
+body.dark-ui .ci-progress-done    { background: #0f2318; color: #2ecc71; }
+body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
 
 .ci-divider {
   font-size: 9px;
