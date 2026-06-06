@@ -342,7 +342,7 @@ function refreshAthleteUI() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('set-origin-btn')?.addEventListener('click', locateMe);
 
-  // Restore UI theme
+  // Restore UI theme first, before anything else renders
   const savedTheme = localStorage.getItem('pe-ui-theme') || 'light';
   setUITheme(savedTheme);
 
@@ -362,8 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshAthleteUI();
   });
 
-  buildStatsPanel();
-
+  // Patch loadAthlete to show/hide the clear button and refresh UI
   const _origLoad = window.loadAthlete;
   window.loadAthlete = function(id) {
     _origLoad(id);
@@ -377,6 +376,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 200);
     setTimeout(() => clearInterval(poll), 10000);
   };
+
+  // Load saved athlete now that the patch is in place
+  const saved = localStorage.getItem('parkrun-athlete');
+  if (saved) {
+    const input = document.getElementById('athlete-id-input');
+    if (input) input.value = saved;
+    loadAthlete(saved);
+  }
+
+  buildStatsPanel();
 });
 </script>
 </body>

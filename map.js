@@ -813,8 +813,6 @@ function initFilterBuilder() {
 
   const athleteInput = document.getElementById('athlete-id-input');
   if (athleteInput) {
-    const saved = localStorage.getItem('parkrun-athlete');
-    if (saved) { athleteInput.value = saved; loadAthlete(saved); }
     athleteInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') loadAthlete(athleteInput.value.trim());
     });
