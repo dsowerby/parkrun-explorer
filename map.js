@@ -25,7 +25,12 @@ const TILE_LAYERS = {
     attribution: 'Tiles &copy; Esri',
     options: { maxZoom: 19 }
   },
-  light: {
+  outdoors: {
+    label: 'Outdoors',
+    url: 'https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png',
+    attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    options: { maxZoom: 20 }
+  },
     label: 'Light',
     url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
