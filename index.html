@@ -362,7 +362,7 @@ function setMobileView(view) {
   if (!isMobile()) return;
 
   // Tapping the active tab closes the sheet
-  if (_mobileView === view) {
+  if (_mobileView === view || view === 'map') {
     closeMobileSheet();
     return;
   }
@@ -372,48 +372,26 @@ function setMobileView(view) {
   const sheet    = document.getElementById('mobile-sheet');
   const content  = document.getElementById('mobile-sheet-content');
   const backdrop = document.getElementById('mobile-sheet-backdrop');
+  const sidebar  = document.getElementById('sidebar');
 
-  // What to show in the sheet
-  if (view === 'map') {
-    closeMobileSheet();
-    return;
-  }
-
-  const sourceId = view === 'filters' ? 'sidebar-filters-block' : 'sidebar-stats-block';
-
-  // Clone the relevant sidebar content into the sheet
-  let source;
-  if (view === 'filters') {
-    // Grab everything from origin bar down to (but not including) legend/stats
-    source = document.getElementById('sidebar-filters-block');
-  } else {
-    source = document.getElementById('sidebar-stats-block');
-  }
-
-  if (source) {
-    content.innerHTML = '';
-    content.appendChild(source.cloneNode(true));
-    // Re-wire events on cloned nodes by just making sheet show the live sidebar sections
-    // Instead of cloning, we'll move content — simpler and keeps event listeners
-  }
-
-  // Simpler approach: just show the full sidebar as the sheet on mobile
+  // Move the sidebar into the sheet — keeps all event listeners intact
   content.innerHTML = '';
-  const sidebar = document.getElementById('sidebar');
-  // Show sheet with sidebar scrolled to the right section
+  content.appendChild(sidebar);
+
   sheet.classList.add('open');
   backdrop.classList.add('open');
   sheet.setAttribute('aria-hidden', 'false');
 
-  // Move sidebar into sheet content temporarily
-  content.appendChild(sidebar);
-
-  // Scroll to the relevant section
+  // Scroll to stats section if that tab was tapped
   if (view === 'stats') {
     setTimeout(() => {
       const statsSection = sidebar.querySelector('#stats-panel')?.closest('.sidebar-section');
-      if (statsSection) statsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
+      if (statsSection) {
+        content.scrollTop = statsSection.offsetTop - 16;
+      }
+    }, 100);
+  } else {
+    content.scrollTop = 0;
   }
 
   // Update tab states
@@ -423,7 +401,9 @@ function setMobileView(view) {
 
 function closeMobileSheet() {
   if (!isMobile()) return;
-  _mobileView = null;
+
+  const wasOpen  = _mobileView !== null;
+  _mobileView    = null;
 
   const sheet    = document.getElementById('mobile-sheet');
   const backdrop = document.getElementById('mobile-sheet-backdrop');
@@ -434,9 +414,10 @@ function closeMobileSheet() {
   backdrop.classList.remove('open');
   sheet.setAttribute('aria-hidden', 'true');
 
-  // Return sidebar to its original position in the DOM
+  // Return sidebar to body before the mobile-bar element
   if (content.contains(sidebar)) {
-    document.body.insertBefore(sidebar, document.getElementById('map'));
+    const mobileBar = document.getElementById('mobile-bar');
+    document.body.insertBefore(sidebar, mobileBar);
   }
 
   document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
