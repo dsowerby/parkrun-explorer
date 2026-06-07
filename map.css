@@ -694,13 +694,13 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
     border-top: 1px solid var(--sidebar-border);
     border-radius: 16px 16px 0 0;
     overflow-y: auto;
-    transform: translateY(100%);
+    transform: translateY(calc(75vh + 60px));
     transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
     z-index: 1002 !important;
   }
 
   #sidebar.mobile-open {
-    transform: translateY(0);
+    transform: translateY(0) !important;
   }
 
   #sidebar::before {
