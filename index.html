@@ -198,11 +198,6 @@
   </button>
 </div>
 
-<!-- ─── Mobile sheet overlay ─────────────────────────────────────────────────── -->
-<div id="mobile-sheet" aria-hidden="true">
-  <div id="mobile-sheet-handle" onclick="closeMobileSheet()"></div>
-  <div id="mobile-sheet-content"></div>
-</div>
 <div id="mobile-sheet-backdrop" onclick="closeMobileSheet()"></div>
 
 
@@ -351,6 +346,8 @@ function buildStatsPanel() {
 }
 
 // ─── Mobile bottom sheet ──────────────────────────────────────────────────────
+// On mobile the sidebar IS the sheet — we just show/hide it as an overlay.
+// No DOM moving. The sidebar stays in place; CSS handles positioning.
 
 let _mobileView = null;
 
@@ -361,7 +358,7 @@ function isMobile() {
 function setMobileView(view) {
   if (!isMobile()) return;
 
-  // Tapping the active tab closes the sheet
+  // Tapping active tab or map tab closes
   if (_mobileView === view || view === 'map') {
     closeMobileSheet();
     return;
@@ -369,62 +366,39 @@ function setMobileView(view) {
 
   _mobileView = view;
 
-  const sheet    = document.getElementById('mobile-sheet');
-  const content  = document.getElementById('mobile-sheet-content');
-  const backdrop = document.getElementById('mobile-sheet-backdrop');
   const sidebar  = document.getElementById('sidebar');
+  const backdrop = document.getElementById('mobile-sheet-backdrop');
 
-  // Move the sidebar into the sheet — keeps all event listeners intact
-  content.innerHTML = '';
-  content.appendChild(sidebar);
-
-  sheet.classList.add('open');
+  sidebar.classList.add('mobile-open');
   backdrop.classList.add('open');
-  sheet.setAttribute('aria-hidden', 'false');
 
   // Scroll to stats section if that tab was tapped
   if (view === 'stats') {
     setTimeout(() => {
-      const statsSection = sidebar.querySelector('#stats-panel')?.closest('.sidebar-section');
+      const statsSection = document.getElementById('stats-panel')?.closest('.sidebar-section');
       if (statsSection) {
-        content.scrollTop = statsSection.offsetTop - 16;
+        sidebar.scrollTop = statsSection.offsetTop - 16;
       }
     }, 100);
   } else {
-    content.scrollTop = 0;
+    sidebar.scrollTop = 0;
   }
 
-  // Update tab states
   document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
   document.getElementById(`mobile-${view}-tab`)?.classList.add('active');
 }
 
 function closeMobileSheet() {
   if (!isMobile()) return;
+  _mobileView = null;
 
-  const wasOpen  = _mobileView !== null;
-  _mobileView    = null;
-
-  const sheet    = document.getElementById('mobile-sheet');
-  const backdrop = document.getElementById('mobile-sheet-backdrop');
-  const content  = document.getElementById('mobile-sheet-content');
-  const sidebar  = document.getElementById('sidebar');
-
-  sheet.classList.remove('open');
-  backdrop.classList.remove('open');
-  sheet.setAttribute('aria-hidden', 'true');
-
-  // Return sidebar to body before the mobile-bar element
-  if (content.contains(sidebar)) {
-    const mobileBar = document.getElementById('mobile-bar');
-    document.body.insertBefore(sidebar, mobileBar);
-  }
+  document.getElementById('sidebar')?.classList.remove('mobile-open');
+  document.getElementById('mobile-sheet-backdrop')?.classList.remove('open');
 
   document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('mobile-map-tab')?.classList.add('active');
 }
 
-// Update the filter badge count when filters change
 function updateMobileFilterBadge() {
   if (!isMobile()) return;
   const badge = document.getElementById('mobile-filter-badge');
@@ -436,11 +410,10 @@ function updateMobileFilterBadge() {
   if (activeFilters.visitedOnly || activeFilters.unvisitedOnly) count++;
   if (activeFilters.radius)        count++;
   if (activeFilters.challenges?.length) count++;
-  badge.textContent    = count;
-  badge.style.display  = count > 0 ? '' : 'none';
+  badge.textContent   = count;
+  badge.style.display = count > 0 ? '' : 'none';
 }
 
-// Hook into applyFilters to update badge — patch after map.js loads
 document.addEventListener('DOMContentLoaded', () => {
   const _origApply = window.applyFilters;
   if (_origApply) {
@@ -450,12 +423,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // Close sheet on map interaction (tap on map)
+  // Tapping the map itself closes the sheet
   document.getElementById('map')?.addEventListener('click', () => {
-    if (_mobileView && _mobileView !== 'map') closeMobileSheet();
+    if (_mobileView) closeMobileSheet();
   });
 
-  // Keyboard: escape closes sheet
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeMobileSheet();
   });
