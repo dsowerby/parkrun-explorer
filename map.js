@@ -188,7 +188,11 @@ function eventMatchesFilters(feature) {
   const name  = props.EventShortName || '';
 
   if (activeFilters.nameSearch) {
-    if (!name.toLowerCase().includes(activeFilters.nameSearch.toLowerCase())) return false;
+    try {
+      if (!new RegExp(activeFilters.nameSearch, 'i').test(name)) return false;
+    } catch {
+      return false;
+    }
   }
 
   if (activeFilters.startsWith) {
@@ -747,7 +751,20 @@ function initFilterBuilder() {
   document.getElementById('fb-name')?.addEventListener('input', e => {
     clearTimeout(nameSearchTimer);
     nameSearchTimer = setTimeout(() => {
-      activeFilters.nameSearch = e.target.value.trim();
+      const raw = e.target.value.trim();
+      // Try to compile as regex — show red border if invalid
+      if (raw) {
+        try {
+          new RegExp(raw, 'i');
+          e.target.classList.remove('input-invalid');
+        } catch {
+          e.target.classList.add('input-invalid');
+          return; // don't apply a broken regex
+        }
+      } else {
+        e.target.classList.remove('input-invalid');
+      }
+      activeFilters.nameSearch = raw;
       activeFilters.challenges = [];
       applyFilters();
     }, 300);
