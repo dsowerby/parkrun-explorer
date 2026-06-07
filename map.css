@@ -665,6 +665,10 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
 .alpha-btn.active { background: var(--btn-active-bg); color: var(--btn-active-text); border-color: var(--btn-active-bg); }
 .alpha-btn.missing { opacity: 0.3; }
 
+/* Hide mobile chrome on desktop */
+#mobile-bar         { display: none; }
+#mobile-sheet-backdrop { display: none; }
+
 /* ─── Mobile bottom sheet ────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
@@ -677,7 +681,7 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
     bottom: 56px;
   }
 
-  /* Sidebar is off-screen by default — slides up on .mobile-open */
+  /* Sidebar off-screen by default, slides up on .mobile-open */
   #sidebar {
     position: fixed;
     left: 0;
@@ -699,7 +703,6 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
     transform: translateY(0);
   }
 
-  /* Add a drag handle via pseudo-element */
   #sidebar::before {
     content: '';
     display: block;
@@ -708,19 +711,17 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
     background: var(--sidebar-border);
     border-radius: 2px;
     margin: 10px auto 4px;
-    flex-shrink: 0;
   }
 
-  /* Sticky header still works inside the sheet */
   .sidebar-header {
     position: sticky;
     top: 0;
     z-index: 2;
   }
 
-  /* ── Bottom tab bar ── */
+  /* Tab bar */
   #mobile-bar {
-    display: flex;
+    display: flex !important;
     position: fixed;
     bottom: 0;
     left: 0;
@@ -748,9 +749,9 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
     -webkit-tap-highlight-color: transparent;
   }
 
-  .mobile-tab.active { color: var(--accent); }
-  .mobile-tab-icon   { font-size: 18px; line-height: 1; }
-  .mobile-tab-label  { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; }
+  .mobile-tab.active  { color: var(--accent); }
+  .mobile-tab-icon    { font-size: 18px; line-height: 1; }
+  .mobile-tab-label   { font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 500; }
 
   .mobile-filter-badge {
     position: absolute;
@@ -770,9 +771,8 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
     padding: 0 4px;
   }
 
-  /* ── Backdrop ── */
+  /* Backdrop */
   #mobile-sheet-backdrop {
-    display: none;
     position: fixed;
     inset: 0;
     bottom: 56px;
@@ -783,20 +783,10 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
   }
 
   #mobile-sheet-backdrop.open {
-    display: block;
+    display: block !important;
     opacity: 1;
   }
 
-}
-
-/* Hide mobile chrome on desktop — must come BEFORE the media query so mobile can override */
-#mobile-bar,
-#mobile-sheet-backdrop {
-  display: none;
-}
-
-@media (max-width: 600px) {
-  #mobile-bar { display: flex; }
 }
 
 /* ─── Leaflet popup overrides ───────────────────────────────────────────────── */
