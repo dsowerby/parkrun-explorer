@@ -743,10 +743,14 @@ function locateMe() {
 // ─── Filter builder wire-up ───────────────────────────────────────────────────
 
 function initFilterBuilder() {
+  let nameSearchTimer = null;
   document.getElementById('fb-name')?.addEventListener('input', e => {
-    activeFilters.nameSearch = e.target.value.trim();
-    activeFilters.challenges = [];
-    applyFilters();
+    clearTimeout(nameSearchTimer);
+    nameSearchTimer = setTimeout(() => {
+      activeFilters.nameSearch = e.target.value.trim();
+      activeFilters.challenges = [];
+      applyFilters();
+    }, 300);
   });
 
   document.getElementById('fb-country')?.addEventListener('change', e => {
