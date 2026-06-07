@@ -335,7 +335,8 @@ function writeHash() {
   if (activeFilters.seriesId)   params.set('series',   activeFilters.seriesId);
   if (activeFilters.visitedOnly)   params.set('visited', '1');
   if (activeFilters.unvisitedOnly) params.set('visited', '0');
-  // hideUnmatched is not persisted — it's a display mode, not a filter
+  if (activeFilters.hideUnmatched) params.set('hide',    '1');
+  if (activeFilters.clustering)    params.set('cluster', '1');
   if (activeFilters.challenges && activeFilters.challenges.length > 0) {
     activeFilters.challenges.forEach(c => params.append('challenge', c));
   }
@@ -361,7 +362,8 @@ function readHash() {
     activeFilters.startsWith = params.get('letter')  || '';
     activeFilters.country    = params.get('country') || '';
     activeFilters.seriesId   = params.get('series')  || '';
-    activeFilters.hideUnmatched = false;  // never restore from hash — display-only state
+    activeFilters.hideUnmatched = params.get('hide')    === '1';
+    activeFilters.clustering    = params.get('cluster') === '1';
     const visited = params.get('visited');
     activeFilters.visitedOnly   = visited === '1';
     activeFilters.unvisitedOnly = visited === '0';
@@ -410,6 +412,10 @@ function readHash() {
   if (activeFilters.visitedOnly)   document.getElementById('fb-visited')?.classList.add('active');
   if (activeFilters.unvisitedOnly) document.getElementById('fb-unvisited')?.classList.add('active');
   if (activeFilters.hideUnmatched) document.getElementById('fb-hide-unmatched')?.classList.add('active');
+  if (activeFilters.clustering) {
+    document.getElementById('fb-cluster')?.classList.add('active');
+    if (geoLoaded) enableClustering();
+  }
   if (activeFilters.startsWith) {
     document.querySelectorAll('.alpha-btn').forEach(b => {
       b.classList.toggle('active', b.textContent === activeFilters.startsWith);
