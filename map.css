@@ -684,7 +684,7 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
   /* Sidebar off-screen by default, slides up on .mobile-open */
   #sidebar {
     position: fixed !important;
-    top: auto !important;
+    top: unset !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 56px !important;
@@ -722,11 +722,14 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
   /* Tab bar */
   #mobile-bar {
     display: flex !important;
+    flex-direction: row;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
     height: 56px;
+    min-height: 56px;
+    max-height: 56px;
     background: var(--sidebar-bg);
     border-top: 1px solid var(--sidebar-border);
     z-index: 1000;
