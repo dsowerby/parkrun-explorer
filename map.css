@@ -665,24 +665,157 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
 .alpha-btn.active { background: var(--btn-active-bg); color: var(--btn-active-text); border-color: var(--btn-active-bg); }
 .alpha-btn.missing { opacity: 0.3; }
 
-/* ─── Responsive: sidebar collapses on mobile ───────────────────────────────── */
+/* ─── Mobile bottom sheet ────────────────────────────────────────────────────── */
 
 @media (max-width: 600px) {
+
+  /* Map fills entire screen */
   #map {
     left: 0;
     top: 0;
-    bottom: 40vh;
+    right: 0;
+    bottom: 56px; /* leave room for tab bar */
   }
+
+  /* Sidebar hidden from normal flow on mobile — moved into sheet */
   #sidebar {
-    top: auto;
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    overflow-y: visible;
+  }
+
+  /* ── Bottom tab bar ── */
+  #mobile-bar {
+    display: flex;
+    position: fixed;
     bottom: 0;
     left: 0;
-    width: 100%;
-    height: 40vh;
-    min-height: 200px;
-    border-right: none;
+    right: 0;
+    height: 56px;
+    background: var(--sidebar-bg);
     border-top: 1px solid var(--sidebar-border);
+    z-index: 1000;
+    transition: background 0.3s, border-color 0.3s;
   }
+
+  .mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--sidebar-muted);
+    position: relative;
+    transition: color 0.15s;
+  }
+
+  .mobile-tab.active { color: var(--accent); }
+
+  .mobile-tab-icon { font-size: 18px; line-height: 1; }
+
+  .mobile-tab-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .mobile-filter-badge {
+    position: absolute;
+    top: 6px;
+    right: calc(50% - 16px);
+    background: var(--accent);
+    color: white;
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+  }
+
+  /* ── Sheet backdrop ── */
+  #mobile-sheet-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1001;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  #mobile-sheet-backdrop.open {
+    display: block;
+    opacity: 1;
+  }
+
+  /* ── Sheet itself ── */
+  #mobile-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 56px; /* sits above tab bar */
+    height: 75vh;
+    background: var(--sidebar-bg);
+    border-top: 1px solid var(--sidebar-border);
+    border-radius: 16px 16px 0 0;
+    z-index: 1002;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #mobile-sheet.open {
+    transform: translateY(0);
+  }
+
+  #mobile-sheet-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--sidebar-border);
+    border-radius: 2px;
+    margin: 10px auto 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  #mobile-sheet-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 12px;
+  }
+
+  #mobile-sheet-content::-webkit-scrollbar { width: 3px; }
+  #mobile-sheet-content::-webkit-scrollbar-thumb { background: var(--sidebar-border); border-radius: 2px; }
+
+  /* Sidebar header stays full-width inside sheet */
+  .sidebar-header {
+    position: relative; /* not sticky inside sheet */
+  }
+
+}
+
+/* Hide mobile chrome on desktop */
+#mobile-bar,
+#mobile-sheet,
+#mobile-sheet-backdrop {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  #mobile-bar { display: flex; }
 }
 
 /* ─── Leaflet popup overrides ───────────────────────────────────────────────── */

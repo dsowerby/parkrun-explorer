@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
+  <meta name="darkreader-lock">
   <link rel="stylesheet" href="map.css">
 </head>
 <body>
@@ -180,7 +181,31 @@
 
 </div>
 
-<!-- ─── Map ─────────────────────────────────────────────────────────────────── -->
+<!-- ─── Mobile bottom bar (hidden on desktop) ───────────────────────────────── -->
+<div id="mobile-bar">
+  <button class="mobile-tab" id="mobile-map-tab" onclick="setMobileView('map')">
+    <span class="mobile-tab-icon">🗺️</span>
+    <span class="mobile-tab-label">Map</span>
+  </button>
+  <button class="mobile-tab" id="mobile-filter-tab" onclick="setMobileView('filters')">
+    <span class="mobile-tab-icon">⚙️</span>
+    <span class="mobile-tab-label">Filters</span>
+    <span class="mobile-filter-badge" id="mobile-filter-badge" style="display:none"></span>
+  </button>
+  <button class="mobile-tab" id="mobile-stats-tab" onclick="setMobileView('stats')">
+    <span class="mobile-tab-icon">📊</span>
+    <span class="mobile-tab-label">Stats</span>
+  </button>
+</div>
+
+<!-- ─── Mobile sheet overlay ─────────────────────────────────────────────────── -->
+<div id="mobile-sheet" aria-hidden="true">
+  <div id="mobile-sheet-handle" onclick="closeMobileSheet()"></div>
+  <div id="mobile-sheet-content"></div>
+</div>
+<div id="mobile-sheet-backdrop" onclick="closeMobileSheet()"></div>
+
+
 <div id="map"></div>
 
 <script src="map.js"></script>
@@ -324,6 +349,136 @@ function buildStatsPanel() {
       </div>` : ''}
   `;
 }
+
+// ─── Mobile bottom sheet ──────────────────────────────────────────────────────
+
+let _mobileView = null;
+
+function isMobile() {
+  return window.innerWidth <= 600;
+}
+
+function setMobileView(view) {
+  if (!isMobile()) return;
+
+  // Tapping the active tab closes the sheet
+  if (_mobileView === view) {
+    closeMobileSheet();
+    return;
+  }
+
+  _mobileView = view;
+
+  const sheet    = document.getElementById('mobile-sheet');
+  const content  = document.getElementById('mobile-sheet-content');
+  const backdrop = document.getElementById('mobile-sheet-backdrop');
+
+  // What to show in the sheet
+  if (view === 'map') {
+    closeMobileSheet();
+    return;
+  }
+
+  const sourceId = view === 'filters' ? 'sidebar-filters-block' : 'sidebar-stats-block';
+
+  // Clone the relevant sidebar content into the sheet
+  let source;
+  if (view === 'filters') {
+    // Grab everything from origin bar down to (but not including) legend/stats
+    source = document.getElementById('sidebar-filters-block');
+  } else {
+    source = document.getElementById('sidebar-stats-block');
+  }
+
+  if (source) {
+    content.innerHTML = '';
+    content.appendChild(source.cloneNode(true));
+    // Re-wire events on cloned nodes by just making sheet show the live sidebar sections
+    // Instead of cloning, we'll move content — simpler and keeps event listeners
+  }
+
+  // Simpler approach: just show the full sidebar as the sheet on mobile
+  content.innerHTML = '';
+  const sidebar = document.getElementById('sidebar');
+  // Show sheet with sidebar scrolled to the right section
+  sheet.classList.add('open');
+  backdrop.classList.add('open');
+  sheet.setAttribute('aria-hidden', 'false');
+
+  // Move sidebar into sheet content temporarily
+  content.appendChild(sidebar);
+
+  // Scroll to the relevant section
+  if (view === 'stats') {
+    setTimeout(() => {
+      const statsSection = sidebar.querySelector('#stats-panel')?.closest('.sidebar-section');
+      if (statsSection) statsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
+  // Update tab states
+  document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`mobile-${view}-tab`)?.classList.add('active');
+}
+
+function closeMobileSheet() {
+  if (!isMobile()) return;
+  _mobileView = null;
+
+  const sheet    = document.getElementById('mobile-sheet');
+  const backdrop = document.getElementById('mobile-sheet-backdrop');
+  const content  = document.getElementById('mobile-sheet-content');
+  const sidebar  = document.getElementById('sidebar');
+
+  sheet.classList.remove('open');
+  backdrop.classList.remove('open');
+  sheet.setAttribute('aria-hidden', 'true');
+
+  // Return sidebar to its original position in the DOM
+  if (content.contains(sidebar)) {
+    document.body.insertBefore(sidebar, document.getElementById('map'));
+  }
+
+  document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('mobile-map-tab')?.classList.add('active');
+}
+
+// Update the filter badge count when filters change
+function updateMobileFilterBadge() {
+  if (!isMobile()) return;
+  const badge = document.getElementById('mobile-filter-badge');
+  if (!badge) return;
+  let count = 0;
+  if (activeFilters.nameSearch)    count++;
+  if (activeFilters.country)       count++;
+  if (activeFilters.seriesId)      count++;
+  if (activeFilters.visitedOnly || activeFilters.unvisitedOnly) count++;
+  if (activeFilters.radius)        count++;
+  if (activeFilters.challenges?.length) count++;
+  badge.textContent    = count;
+  badge.style.display  = count > 0 ? '' : 'none';
+}
+
+// Hook into applyFilters to update badge — patch after map.js loads
+document.addEventListener('DOMContentLoaded', () => {
+  const _origApply = window.applyFilters;
+  if (_origApply) {
+    window.applyFilters = function() {
+      _origApply.apply(this, arguments);
+      updateMobileFilterBadge();
+    };
+  }
+
+  // Close sheet on map interaction (tap on map)
+  document.getElementById('map')?.addEventListener('click', () => {
+    if (_mobileView && _mobileView !== 'map') closeMobileSheet();
+  });
+
+  // Keyboard: escape closes sheet
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeMobileSheet();
+  });
+});
 
 // ─── UI theme (sidebar dark/light, independent of map tiles) ─────────────────
 
