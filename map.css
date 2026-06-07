@@ -789,10 +789,14 @@ body.dark-ui .ci-progress-partial { background: #2d2700; color: #f1c40f; }
 
 }
 
-/* Hide mobile chrome on desktop */
+/* Hide mobile chrome on desktop — must come BEFORE the media query so mobile can override */
 #mobile-bar,
 #mobile-sheet-backdrop {
   display: none;
+}
+
+@media (max-width: 600px) {
+  #mobile-bar { display: flex; }
 }
 
 /* ─── Leaflet popup overrides ───────────────────────────────────────────────── */
