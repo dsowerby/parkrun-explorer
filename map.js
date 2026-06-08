@@ -479,11 +479,13 @@ function haversineKm(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.asin(Math.sqrt(a));
 }
 
+const PROXY = 'https://snowy-wood-82b6.dave-sowerby.workers.dev';
+
 // ─── GeoJSON loading ──────────────────────────────────────────────────────────
 
 setLoadingState(true);
 
-fetch('events.json')
+fetch(`${PROXY}/events`)
   .then(r => r.json())
   .then(data => {
     allEvents = (data.events || data).features;
@@ -546,9 +548,21 @@ fetch('events.json')
 
     setLoadingState(false);
 
-    // Apply any hash filter that was waiting, then re-colour if athlete arrived first
+    // Apply hash filters now that geo is loaded
     readHash();
     applyFilters();
+
+    // If hideUnmatched is on and athlete data hasn't arrived yet,
+    // re-run fitBounds once athlete loads so the zoom is correct
+    if (activeFilters.hideUnmatched && visitedSet.size === 0) {
+      const waitForAthlete = setInterval(() => {
+        if (visitedSet.size > 0 || !localStorage.getItem('parkrun-athlete')) {
+          clearInterval(waitForAthlete);
+          applyFilters();
+        }
+      }, 200);
+      setTimeout(() => clearInterval(waitForAthlete), 15000);
+    }
   })
   .catch(err => {
     console.error('Failed to load events.json', err);
@@ -582,7 +596,7 @@ function loadAthlete(id) {
 
       const el = document.getElementById('athlete-count');
       if (el) el.textContent = `${visitedSet.size} visited`;
-      if (geoLoaded) applyFilters();
+      if (geoLoaded) applyFilters();  // re-runs fitBounds if hideUnmatched is on
       if (typeof refreshAthleteUI === 'function') refreshAthleteUI();
     })
     .catch(() => {
