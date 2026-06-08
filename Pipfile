@@ -12,5 +12,4 @@ playwright = "*"
 python_version = "3.11"
 
 [scripts]
-serve    = "python -m http.server 8000"
-athletes = "python prepare.py"
+serve = "python -m http.server 8000 --directory docs"
