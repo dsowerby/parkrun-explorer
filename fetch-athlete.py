@@ -54,8 +54,24 @@ def scrape_athlete(athlete_id):
     url = f"https://www.parkrun.org.uk/parkrunner/{athlete_id}/all/"
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True, slow_mo=50)
-        page    = browser.new_page()
+        browser = p.chromium.launch(
+            headless=True,
+            slow_mo=50,
+            args=[
+                '--disable-blink-features=AutomationControlled',
+                '--no-sandbox',
+                '--disable-dev-shm-usage',
+            ]
+        )
+        context = browser.new_context(
+            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            viewport={'width': 1280, 'height': 800},
+            locale='en-GB',
+            timezone_id='Europe/London',
+        )
+        page = context.new_page()
+        # Remove webdriver flag that headless Chrome exposes
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page.goto(url, wait_until="networkidle", timeout=60000)
 
         # Extract everything from each row in a single pass.
@@ -106,6 +122,7 @@ def scrape_athlete(athlete_id):
             })"""
         )
 
+        context.close()
         browser.close()
 
     return runs
