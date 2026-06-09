@@ -73,6 +73,13 @@ def scrape_athlete(athlete_id):
         # Remove webdriver flag that headless Chrome exposes
         page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page.goto(url, wait_until="networkidle", timeout=60000)
+        print(f"  page title: {page.title()}")
+        print(f"  page URL:   {page.url}")
+        # Check if we got the results table or a block page
+        table = page.query_selector("table#results")
+        print(f"  results table found: {table is not None}")
+        if not table:
+            print(f"  page content snippet: {page.content()[:500]}")
 
         # Extract everything from each row in a single pass.
         # This keeps slug, date, time and PB in sync — no separate arrays.
