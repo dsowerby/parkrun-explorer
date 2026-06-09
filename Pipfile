@@ -12,4 +12,5 @@ playwright = "*"
 python_version = "3.11"
 
 [scripts]
-serve = "python -m http.server 8000 --directory docs"
+serve   = "python -m http.server 8000 --directory docs"
+refresh = "bash -c 'for f in docs/athletes/*.json; do id=$(basename $f .json); echo \"Fetching $id...\"; python fetch-athlete.py $id; sleep 5; done'"
